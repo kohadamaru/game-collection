@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ゲームポートフォリオ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        #game-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .game-item {
+            background-color: yellow;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 10px;
+        }
+        .game-title {
+            font-weight: bold;
+            text-align: center;
+        }
+        .game-cover {
+            width: 100%;
+            height: 150px;
+            background-color: lightgray;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-around;
+        }
+        .status-btn {
+            padding: 5px 10px;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .played-btn {
+            background-color: #28a745;
+        }
+        .owned-btn {
+            background-color: #007bff;
+        }
+        .wishlist-btn {
+            background-color: #ffc107;
+        }
+        .status-btn.active {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <h1>私のゲームコレクション</h1>
+
+    <!-- フィルタリング用のボタン -->
+    <button onclick="filterGames('all')">すべて</button>
+    <button onclick="filterGames('played')">プレイ済み</button>
+    <button onclick="filterGames('owned')">持っている</button>
+    <button onclick="filterGames('wishlist')">やりたい</button>
+
+    <div id="game-list">
+        <!-- ゲームリストがここに表示されます -->
+    </div>
+
+    <script>
+        let gameData = [];
+        let currentFilter = 'all';
+
+        // JSONファイルを読み込んでゲームリストを表示する関数
+        fetch('gameData.json')
+            .then(response => response.json())
+            .then(data => {
+                gameData = data.map(game => ({
+                    ...game,
+                    status: [] // 各ゲームの状態を保持する配列
+                }));
+                displayGames(gameData);
+            })
+            .catch(error => console.error('Error loading the games:', error));
+
+        // ゲームリストを表示する関数
+        function displayGames(games) {
+            const gameList = document.getElementById('game-list');
+            gameList.innerHTML = '';
+            games.forEach(game => {
+                const gameItem = document.createElement('div');
+                gameItem.className = 'game-item';
+                gameItem.innerHTML = `
+                    <img src="https://via.placeholder.com/200x250" alt="${game.title}" class="game-cover">
+                    <div class="game-info">
+                        <div class="game-title">${game.title}</div>
+                        <div class="game-release-date">発売日: ${game.date}</div>
+                        <div class="button-group">
+                            <button class="status-btn played-btn ${game.status.includes('played') ? 'active' : ''}" onclick="toggleStatus(this, '${game.title}', 'played')">プレイ済み</button>
+                            <button class="status-btn owned-btn ${game.status.includes('owned') ? 'active' : ''}" onclick="toggleStatus(this, '${game.title}', 'owned')">持っている</button>
+                            <button class="status-btn wishlist-btn ${game.status.includes('wishlist') ? 'active' : ''}" onclick="toggleStatus(this, '${game.title}', 'wishlist')">やりたい</button>
+                        </div>
+                    </div>
+                `;
+                gameList.appendChild(gameItem);
+            });
+        }
+
+        // ボタンの状態をトグルする関数
+        function toggleStatus(button, title, status) {
+            const game = gameData.find(g => g.title === title);
+            if (button.classList.contains('active')) {
+                button.classList.remove('active');
+                game.status = game.status.filter(s => s !== status);
+            } else {
+                button.classList.add('active');
+                game.status.push(status);
+            }
+        }
+
+        // ゲームリストをフィルタリングする関数
+        function filterGames(filter) {
+            currentFilter = filter;
+            let filteredGames = gameData;
+            if (filter === 'played') {
+                filteredGames = gameData.filter(game => game.status.includes('played'));
+            } else if (filter === 'owned') {
+                filteredGames = gameData.filter(game => game.status.includes('owned'));
+            } else if (filter === 'wishlist') {
+                filteredGames = gameData.filter(game => game.status.includes('wishlist'));
+            }
+            displayGames(filteredGames);
+        }
+    </script>
+</body>
+</html>
